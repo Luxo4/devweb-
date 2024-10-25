@@ -1,0 +1,152 @@
+ <title>Registro e Inicio de Sesión</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .navbar {
+            width: 100%;
+            background-color: #f8f9fa;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand {
+            font-size: 24px;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            margin: 10px 0;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #5cb85c;
+            border: none;
+            border-radius: 3px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        .admin-link {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .admin-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .admin-link a:hover {
+            text-decoration: underline;
+        }
+        .admin-container {
+            display: none;
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">Precoce-Italiano</a>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="container">
+    <h2>Registro</h2>
+    <form id="registerForm" action="/register" method="POST" onsubmit="return validateForm()">
+        <input type="text" name="username" placeholder="Nombre de usuario" required>
+        <input type="email" id="email" name="email" placeholder="Correo electrónico" required>
+        <span id="emailError" style="color: red; display: none;">El correo ya está registrado o es inválido.</span>
+        <input type="password" name="password" placeholder="Contraseña" required>
+        <button type="submit">Registrar</button>
+    </form>
+</div>
+
+<div class="container">
+    <h2>Iniciar Sesión</h2>
+    <form action="register" method="POST">
+        <input type="text" name="username" placeholder="Nombre de usuario" required>
+        <input type="password" name="password" placeholder="Contraseña" required>
+        <button type="submit">Iniciar Sesión</button>
+   <!--- </form>
+    <div class="admin-link">
+        <a href="/admin">Iniciar como Administrador</a>
+    </div> --->
+</div>
+
+
+<div class="container">
+    <h2>Iniciar Sesión</h2>
+    <form action="/login" method="POST"> <!-- Cambiar aquí la acción a /login -->
+        <input type="text" name="username" placeholder="Nombre de usuario" required>
+        <input type="password" name="password" placeholder="Contraseña" required>
+        <button type="submit">Iniciar Sesión</button>
+    </form>
+</div>
+
+<script>
+async function validateForm() {
+    const email = document.getElementById('email').value;
+    const emailError = document.getElementById('emailError');
+
+    try {
+        // Realizar la validación en el servidor
+        const response = await fetch('/validate-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            emailError.textContent = result.error;
+            emailError.style.display = 'block';
+            return false;
+        }
+
+        // Ocultar el mensaje de error si el correo es válido
+        emailError.style.display = 'none';
+        return true; // Permite el envío del formulario si la validación es exitosa
+
+    } catch (err) {
+        console.error('Error de validación:', err);
+        emailError.textContent = 'Error en la validación del correo.';
+        emailError.style.display = 'block';
+        return false;
+    }
+}
+</script>
+

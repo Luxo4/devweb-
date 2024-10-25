@@ -1,0 +1,63 @@
+<style>
+        .historial {
+            margin: 20px;
+        }
+        .historial-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .historial-item h4 {
+            margin-top: 0;
+        }
+        .historial-item p {
+            margin: 0;
+        }
+    </style>
+
+    
+<div class="container mt-5">
+    <h1>Historial de Compras</h1>
+    <div id="historial" class="historial">
+
+    </div>
+    <button id="clear-history" class="btn btn-danger">Limpiar Historial</button>
+    <a href="/" class="btn btn-primary">Volver a la Tienda</a>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const historial = JSON.parse(localStorage.getItem('historial')) || [];
+        const historialDiv = document.getElementById('historial');
+        const clearHistoryBtn = document.getElementById('clear-history');
+
+        
+        if (historial.length > 0) {
+            historial.forEach(boleta => {
+                const boletaDiv = document.createElement('div');
+                boletaDiv.classList.add('historial-item');
+                boletaDiv.innerHTML = `
+                    <h4>Fecha y Hora: ${new Date(boleta.fecha).toLocaleString()}</h4>
+                    ${boleta.items.map(item => `
+                        <p><strong>${item.nombre}</strong> - Cantidad: ${item.cantidad} - SUBTOTAL: $${(item.cantidad * item.precio).toFixed(0)} CLP</p>
+                    `).join('')}
+                    <p><strong>Total: $${boleta.total.toFixed(0)} CLP</strong></p>
+                `;
+                historialDiv.appendChild(boletaDiv);
+            });
+        } else {
+            historialDiv.innerHTML = '<p>No hay historial de compras.</p>';
+        }
+
+       
+        clearHistoryBtn.addEventListener('click', () => {
+            localStorage.removeItem('historial');
+            historialDiv.innerHTML = '<p>Historial de compras ha sido limpiado.</p>';
+        });
+    });
+</script> 
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>

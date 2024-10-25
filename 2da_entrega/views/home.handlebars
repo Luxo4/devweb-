@@ -1,0 +1,488 @@
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">PRECOCE-ITALIANO</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="register">Iniciar Sesion</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="historial">Historial de compras</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="main_ad">Modo Admin</a>
+                    </li>
+                </ul>
+                <form class="d-flex ms-auto" role="search">
+                    <input class="form-control me-2" type="search" placeholder="Buscar" aria-label="Buscar">
+                    <button class="btn btn-outline-success" type="submit">Buscar</button>
+                </form>
+                <button class="btn btn-outline-primary ms-3" data-bs-toggle="modal" data-bs-target="#carritoModal">Carrito</button>
+                <button class="btn btn-outline-primary ms-3" data-bs-toggle="modal" data-bs-target="#walletModal">Cartera</button>
+            </div>
+        </div>
+        
+<div class="modal fade" id="walletModal" tabindex="-1" aria-labelledby="walletModalLabel" aria-hidden="true"> 
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="walletModalLabel">Mi Billetera Virtual</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body wallet-content">
+                <h4>Saldo Actual</h4>
+                <div class="balance" id="wallet-balance">$0 CLP</div>
+                <button class="btn btn-primary" onclick="addFunds()">Agregar Fondos</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="carritoModal" tabindex="-1" aria-labelledby="carritoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="carritoModalLabel">Carrito de Compras</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul id="listaCarrito" class="list-group mb-3"></ul>
+                <p id="total">Total: $0</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="checkout()">Realizar Compra</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let walletBalance = 0;
+    let total = 0;
+
+    function updateWallet() {
+        document.getElementById('wallet-balance').innerText = `$${walletBalance.toFixed(2)} CLP`;
+    }
+
+    function addFunds() {
+        walletBalance += 10000; // Agregar 10,000 CLP
+        updateWallet();
+    }
+
+    function agregarAlCarrito(nombre, precio) {
+        const lista = document.getElementById('listaCarrito');
+        const item = document.createElement('li');
+        item.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+
+        const nombreProducto = document.createElement('span');
+        nombreProducto.textContent = nombre;
+        nombreProducto.classList.add('me-3');
+
+        const detallesContainer = document.createElement('div');
+        detallesContainer.classList.add('d-flex', 'align-items-center');
+
+        const cantidadInput = document.createElement('input');
+        cantidadInput.type = 'number';
+        cantidadInput.value = 1;
+        cantidadInput.min = 1;
+        cantidadInput.classList.add('form-control', 'me-2');
+        cantidadInput.style.width = '80px';
+        cantidadInput.onchange = function() {
+            actualizarTotal();
+        };
+
+        const totalProducto = document.createElement('span');
+        totalProducto.textContent = `$${precio}`;
+        totalProducto.classList.add('ms-3');
+
+        const botonEliminar = document.createElement('button');
+        botonEliminar.textContent = 'Eliminar';
+        botonEliminar.classList.add('btn', 'btn-danger', 'btn-sm', 'ms-2');
+        botonEliminar.onclick = function() {
+            lista.removeChild(item);
+            actualizarTotal();
+        };
+
+        detallesContainer.appendChild(cantidadInput);
+        detallesContainer.appendChild(totalProducto);
+        detallesContainer.appendChild(botonEliminar);
+        item.appendChild(nombreProducto);
+        item.appendChild(detallesContainer);
+        lista.appendChild(item);
+
+        actualizarTotal();
+    }
+
+    function actualizarTotal() {
+        const items = document.querySelectorAll('#listaCarrito li');
+        total = 0;
+
+        items.forEach(item => {
+            const cantidad = item.querySelector('input').value;
+            const precio = parseFloat(item.textContent.split('$')[1]);
+            const subtotal = cantidad * precio;
+            item.querySelector('span.ms-3').textContent = `$${subtotal.toFixed(0)}`;
+            total += subtotal;
+        });
+
+        document.getElementById('total').textContent = `Total: $${total.toFixed(0)}`;
+    }
+
+    function checkout() {
+        if (walletBalance >= total) {
+            walletBalance -= total; // Descontar el total de la billetera
+            updateWallet();
+
+            // Guardar recibo y pasar los ítems del carrito
+            guardarRecibo(total);
+
+            // Vaciar el carrito
+            document.getElementById('listaCarrito').innerHTML = '';
+            actualizarTotal();
+
+            alert('Compra realizada exitosamente.');
+        } else {
+            alert('Fondos insuficientes en la billetera.');
+        }
+    }
+
+    function guardarRecibo(monto) {
+        const historial = JSON.parse(localStorage.getItem('historial')) || [];
+        const itemsCarrito = [];
+
+        const items = document.querySelectorAll('#listaCarrito li');
+        items.forEach(item => {
+            const nombre = item.querySelector('span').textContent;
+            const cantidad = item.querySelector('input').value;
+            const precio = parseFloat(item.querySelector('span.ms-3').textContent.replace('$', ''));
+            itemsCarrito.push({ nombre, cantidad, precio });
+        });
+
+        const boleta = {
+            fecha: new Date().toISOString(),
+            items: itemsCarrito,
+            total: monto,
+        };
+
+        historial.push(boleta);
+        localStorage.setItem('historial', JSON.stringify(historial));
+
+        // Limpiar el carrito después de guardar el recibo
+        localStorage.removeItem('carrito');
+    }
+
+    // Inicializar el saldo al cargar la página
+    document.addEventListener('DOMContentLoaded', updateWallet);
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const historial = JSON.parse(localStorage.getItem('historial')) || [];
+        const historialDiv = document.getElementById('historial');
+        const clearHistoryBtn = document.getElementById('clear-history');
+
+        if (historial.length > 0) {
+            historial.forEach(boleta => {
+                const boletaDiv = document.createElement('div');
+                boletaDiv.classList.add('historial-item');
+                boletaDiv.innerHTML = `
+                    <h4>Fecha y Hora: ${new Date(boleta.fecha).toLocaleString()}</h4>
+                    ${boleta.items.map(item => `
+                        <p><strong>${item.nombre}</strong> - Cantidad: ${item.cantidad} - SUBTOTAL: $${(item.cantidad * item.precio).toFixed(0)} CLP</p>
+                    `).join('')}
+                    <p><strong>Total: $${boleta.total.toFixed(0)} CLP</strong></p>
+                `;
+                historialDiv.appendChild(boletaDiv);
+            });
+        } else {
+            historialDiv.innerHTML = '<p>No hay historial de compras.</p>';
+        }
+
+        clearHistoryBtn.addEventListener('click', () => {
+            localStorage.removeItem('historial');
+            historialDiv.innerHTML = '<p>Historial de compras ha sido limpiado.</p>';
+        });
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+
+
+<div class="modal fade" id="carritoModal" tabindex="-1" aria-labelledby="carritoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="carritoModalLabel">Carrito de Compras</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul id="listaCarrito" class="list-group mb-3"></ul>
+                <p id="total">Total: $0</p>
+            </div>
+            <div class="modal-footer">
+                <a href="boleta.html" class="btn btn-success" onclick="guardarCarrito()">Ir a Pagar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let total = 0;
+
+    function agregarAlCarrito(nombre, precio) {
+        const lista = document.getElementById('listaCarrito');
+        const item = document.createElement('li');
+        item.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+
+        const nombreProducto = document.createElement('span');
+        nombreProducto.textContent = nombre;
+        nombreProducto.classList.add('me-3');
+
+
+        const detallesContainer = document.createElement('div');
+        detallesContainer.classList.add('d-flex', 'align-items-center');
+
+
+        const cantidadInput = document.createElement('input');
+        cantidadInput.type = 'number';
+        cantidadInput.value = 1;
+        cantidadInput.min = 1;
+        cantidadInput.classList.add('form-control', 'me-2');
+        cantidadInput.style.width = '80px';
+        cantidadInput.onchange = function() {
+            actualizarTotal();
+        };
+
+        const totalProducto = document.createElement('span');
+        totalProducto.textContent = `$${precio}`;
+        totalProducto.classList.add('ms-3');
+
+        const botonEliminar = document.createElement('button');
+        botonEliminar.textContent = 'Eliminar';
+        botonEliminar.classList.add('btn', 'btn-danger', 'btn-sm', 'ms-2');
+        botonEliminar.onclick = function() {
+            lista.removeChild(item);
+            actualizarTotal();
+        };
+
+        detallesContainer.appendChild(cantidadInput);
+        detallesContainer.appendChild(totalProducto);
+        detallesContainer.appendChild(botonEliminar);
+        item.appendChild(nombreProducto);
+        item.appendChild(detallesContainer);
+        lista.appendChild(item);
+
+        actualizarTotal();
+    }
+
+    function actualizarTotal() {
+        const items = document.querySelectorAll('#listaCarrito li');
+        total = 0;
+
+        items.forEach(item => {
+            const cantidad = item.querySelector('input').value;
+             const precio = parseFloat(item.textContent.split('$')[1]);
+            const subtotal = cantidad * precio;
+            item.querySelector('span.ms-3').textContent = `$${subtotal.toFixed(0)}`;
+            total += subtotal;
+        });
+
+        document.getElementById('total').textContent = `Total: $${total.toFixed(0)}`;
+    }
+
+    function guardarCarrito() {
+        const listaCarrito = [];
+        const items = document.querySelectorAll('#listaCarrito li');
+        items.forEach(item => {
+            const nombre = item.querySelector('span').textContent;
+            const cantidad = item.querySelector('input').value;
+            const precio = parseFloat(item.querySelector('span.ms-3').textContent.replace('$', ''));
+            listaCarrito.push({ nombre, cantidad, precio });
+        });
+        localStorage.setItem('carrito', JSON.stringify(listaCarrito));
+    }
+</script> 
+
+    </nav>
+
+<div id="carouselExampleIndicators" class="carousel slide imagenes" data-bs-ride="carousel" data-bs-interval="2500">
+
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <img src="https://taromotos.cl/cdn/shop/files/gp1-banner2_1600x.png?v=1645196321" class="d-block w-100" alt="...">
+          </div>
+          <div class="carousel-item">
+            <img src="https://taromotos.cl/cdn/shop/files/GP1BANNER_1600x.png?v=1645197375" class="d-block w-100" alt="...">
+          </div>
+          <div class="carousel-item">
+            <img src="https://taromotos.cl/cdn/shop/files/gp1-banner3_1600x.png?v=1645196349" class="d-block w-100" alt="...">
+          </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+
+
+      <div class="container">
+        <h1>Productos</h1>
+        <div class="row">
+          {{#each lista}}
+<div class="col" style="margin-bottom: 20px;">
+    <div class="card" style="width: 18rem; margin: 0 auto;">
+        <img src="https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/128139021_01/w=800,h=800,fit=pad" class="card-img-top" alt="{{this.name}}"> <!-- Usar la URL de la imagen -->
+        <div class="card-body">
+            <h5 class="card-title">{{this.name}}</h5>
+            <p class="card-text">{{this.price}} $</p>
+            <button class="btn btn-primary" onclick="agregarAlCarrito('{{this.name}}', {{this.price}})">Añadir al Carrito</button>
+        </div>
+    </div>
+</div>
+{{/each}}
+            <div class="col" style="margin-bottom: 20px;">
+                <div class="card" style="width: 18rem; margin: 0 auto;">
+                    <img 
+                        src="https://www.yamahamotos.cl/wp-content/uploads/2022/07/r1_negra.jpg" 
+                        onmouseout="this.src='https://www.yamahamotos.cl/wp-content/uploads/2022/07/r1_negra.jpg'" 
+                        onmouseover="this.src='https://www.yamahamotos.cl/wp-content/uploads/2022/07/r1_azul.jpg'"
+                        class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Yamaha - R1</h5>
+                        <p class="card-subtitle mb-2 text-muted">998 cc</p>
+                        <p class="card-text">Una bestia de velocidad y tecnología. Con su motor de competición y diseño agresivo, ofrece una experiencia de conducción emocionate y sin igual. ¡Conquista la carretera con esta maquina legendaria!</p>
+                        <p>$1.000</p>
+                        <button class="btn btn-primary" onclick="agregarAlCarrito('Yamaha - R1', 1000)">Añadir al Carrito</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col" style="margin-bottom: 20px;">
+                <div class="card" style="width: 18rem; margin: 0 auto;">
+                    <img 
+                        src="https://www.suzuki.com.co/sites/default/files/2024-04/HAYABUSA%20negra_0.png" 
+                        onmouseout="this.src='https://www.suzuki.com.co/sites/default/files/2024-04/HAYABUSA%20negra_0.png'" 
+                        onmouseover="this.src='https://www.suzuki.com.co/sites/default/files/2024-04/HAYABUSA%20gris_0.png'"
+                        class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Suzuki - HAYABUSA 1300</h5>
+                        <p class="card-subtitle mb-2 text-muted">1340 cc</p>
+                        <p class="card-text">Es la definición de potencia pura y velocidad extrema. Con su motor de alta cilindrada y diseño aerodinámico, esta moto es la reina de la carretera. ¡Siente la adrenalina al máximo!</p>
+                        <p>$1.000</p>
+                        <button class="btn btn-primary" onclick="agregarAlCarrito('Suzuki - HAYABUSA 1300', 1000)">Añadir al Carrito</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col" style="margin-bottom: 20px;">
+                <div class="card" style="width: 18rem; margin: 0 auto;">
+                    <img 
+                        src="https://aws.kawasaki-la-administration.com//ContentStorage/KLA/Products/8589/6a544ba0-167a-4836-b2fc-7e9dd9285d6a.jpg?w=510&h=340&mode=crop" 
+                        onmouseout="this.src='https://aws.kawasaki-la-administration.com//ContentStorage/KLA/Products/8589/6a544ba0-167a-4836-b2fc-7e9dd9285d6a.jpg?w=510&h=340&mode=crop'" 
+                        onmouseover="this.src='https://aws.kawasaki-la-administration.com//ContentStorage/KLA/Products/8589/4f1256fe-9e90-407f-bcb4-685bfab640d0.jpg?w=510&h=340&mode=crop'"
+                        class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Kawasaki - H2R</h5>
+                        <p class="card-subtitle mb-2 text-muted">998 cc</p>
+                        <p class="card-text">La moto más salvaje y avanzada del mercado. Con un motor sobrealimentado y un diseño futurista, ofrece una aceleración brutal y una experiencia de conducción inigualable. ¡Prepárate para la velocidad sin límites!</p>
+                        <p>$1.000</p>
+                        <button class="btn btn-primary" onclick="agregarAlCarrito('Kawasaki - H2R', 1000)">Añadir al Carrito</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col" style="margin-bottom: 20px;">
+                <div class="card" style="width: 18rem; margin: 0 auto;">
+                    <img 
+                        src="https://static.wixstatic.com/media/ff08fe_ab585f8cc32149e0842c76328b08db2d~mv2.png" 
+                        onmouseout="this.src='https://static.wixstatic.com/media/ff08fe_ab585f8cc32149e0842c76328b08db2d~mv2.png'" 
+                        onmouseover="this.src='https://static.wixstatic.com/media/ff08fe_0c7fd3e9aae848009dc37adbca5d68dd~mv2.png'"
+                        class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">CFMOTO - 450SR-S</h5>
+                        <p class="card-subtitle mb-2 text-muted">450 cc</p>
+                        <p class="card-text">Combina estilo y rendimiento en una moto versátil. Ideal para los que buscan una maquina potente y ágil, con un diseño moderno y caracteristicas que hacen de cada viaje una aventura.</p>  
+                        <p>$1.000</p>
+                        <button class="btn btn-primary" onclick="agregarAlCarrito('CFMOTO - 450SR-S', 1000)">Añadir al Carrito</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+<div class="footer-content" style="display: flex; justify-content: space-between; align-items: center;">
+    <nav aria-label="Page navigation example" style="margin-left: auto;">
+      <ul class="pagination justify-content-center">
+        <li class="page-item disabled">
+          <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+            <span aria-hidden="true">&laquo;</span> Anterior
+          </a>
+        </li>
+        <li class="page-item"><a class="page-link" href="#">1</a></li>
+        <li class="page-item"><a class="page-link" href="#">2</a></li>
+        <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <li class="page-item"><a class="page-link" href="#">4</a></li>
+        <li class="page-item"><a class="page-link" href="#">5</a></li>
+        <li class="page-item">
+          <a class="page-link" href="#">
+            Siguiente <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  
+  <style>
+    .pagination {
+      font-size: 1rem;
+    }
+  
+    .page-item .page-link {
+      border-radius: 50%;
+      padding: 0.5rem 1rem;
+      margin: 0.1rem;
+    }
+  
+    .page-item.active .page-link {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+      color: white;
+    }
+  
+    .page-link {
+      transition: background-color 0.2s, color 0.2s;
+    }
+  
+    .page-link:hover {
+      background-color: #e9ecef;
+      color: #0d6efd;
+    }
+  
+    .page-item.disabled .page-link {
+      cursor: not-allowed;
+      background-color: #f8f9fa;
+    }
+  
+    .designers {
+      font-style: italic;
+      font-size: 0.8rem; /* Tamaño de letra reducido */
+    }
+  
+    .designers ul {
+      text-align: left;
+    }
+  </style>
+  
